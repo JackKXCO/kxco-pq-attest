@@ -1,5 +1,10 @@
 # kxco-pq-attest
 
+[![npm](https://img.shields.io/npm/v/kxco-pq-attest?label=npm&color=b0964f)](https://www.npmjs.com/package/kxco-pq-attest)
+[![Socket](https://socket.dev/api/badge/npm/package/kxco-pq-attest)](https://socket.dev/npm/package/kxco-pq-attest)
+[![license](https://img.shields.io/badge/license-Apache--2.0-blue)](./LICENSE)
+[![node](https://img.shields.io/node/v/kxco-pq-attest.svg)](https://nodejs.org)
+
 Post-quantum attestations: sign arbitrary payloads with ML-DSA-65 (NIST FIPS 204). Produces a self-contained JSON envelope any counterparty can verify without trust delegation. Works in Node.js ≥ 20 and Cloudflare Workers.
 
 ## Install
@@ -72,6 +77,18 @@ Requires [`kxco-pq-cli`](https://www.npmjs.com/package/kxco-pq-cli).
 | [`kxco-pq-hsm`](https://www.npmjs.com/package/kxco-pq-hsm) | HSM-backed key storage |
 | [`kxco-pq-audit`](https://www.npmjs.com/package/kxco-pq-audit) | Tamper-evident operation log |
 | [`kxco-pq-sdk`](https://www.npmjs.com/package/kxco-pq-sdk) | `KxcoIdentity` unified API |
+
+## Security
+
+Cryptographic signing is provided by [Noble post-quantum](https://github.com/paulmillr/noble-post-quantum) — independently audited by Cure53 (2024). All ML-DSA-65 operations conform to NIST FIPS 204.
+
+To report a vulnerability, open a [private security advisory](https://github.com/JackKXCO/kxco-pq-attest/security/advisories/new) or email **security@kxco.ai**.
+
+## Funding
+
+Maintained by **Shayne Heffernan** and **John Heffernan** at [KXCO by Knightsbridge](https://kxco.ai).
+
+[Knightsbridge Law](https://knightsbridge.law) · [target150.com](https://target150.com) · [livetradingnews.com](https://livetradingnews.com)
 
 ## License
 

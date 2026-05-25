@@ -1,6 +1,6 @@
 {
   "name": "kxco-pq-attest",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Post-quantum attestations: sign arbitrary payloads with ML-DSA-65 (NIST FIPS 204). Produces a self-contained JSON envelope any counterparty can verify without trust delegation. Works in Node.js and Cloudflare Workers.",
   "keywords": [
     "post-quantum",
@@ -10,7 +10,15 @@
     "nist",
     "fips-204",
     "cloudflare-workers",
-    "kxco"
+    "kxco",
+    "signing",
+    "verification",
+    "payload-signing",
+    "self-contained",
+    "regulatory",
+    "identity",
+    "credential",
+    "compliance"
   ],
   "license": "Apache-2.0",
   "author": "KXCO by Knightsbridge <hello@kxco.ai>",
@@ -49,6 +57,7 @@
   "scripts": {
     "test": "node --test --test-timeout=30000 test/attest.test.js"
   },
+  "funding": "https://kxco.ai",
   "publishConfig": {
     "provenance": true,
     "access": "public"
