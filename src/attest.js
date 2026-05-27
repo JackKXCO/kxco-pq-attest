@@ -27,7 +27,7 @@ function signingMsg(payloadB64, kid, issuedAt) {
   return msg
 }
 
-export function attest(payload, keypair) {
+export async function attest(payload, keypair, { anchor = false, purpose, chain } = {}) {
   const payloadBytes = typeof payload === 'string'
     ? new TextEncoder().encode(payload)
     : new Uint8Array(payload)
@@ -38,13 +38,23 @@ export function attest(payload, keypair) {
   const msg        = signingMsg(payloadB64, kid, issuedAt)
   const sig        = mlDsa.ml_dsa65.sign(new Uint8Array(keypair.secretKey), msg)
 
-  return {
+  const envelope = {
     'kxco-attest': VERSION,
     payload:   payloadB64,
     kid,
     issuedAt,
     signature: b64url(sig),
   }
+
+  if (anchor && chain) {
+    const envelopeBytes = new TextEncoder().encode(JSON.stringify(envelope))
+    const hashBuf       = await globalThis.crypto.subtle.digest('SHA-256', envelopeBytes)
+    const payloadHash   = Buffer.from(hashBuf).toString('hex')
+    const chainAnchor   = await chain.anchorAttestation({ payloadHash, purpose: purpose ?? '' })
+    envelope.chainAnchor = chainAnchor
+  }
+
+  return envelope
 }
 
 export function verify(envelope, publicKey) {

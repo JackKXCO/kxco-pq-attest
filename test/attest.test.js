@@ -7,8 +7,8 @@ import { attest, verify } from '../src/index.js'
 const keypair = mlDsa.ml_dsa65.keygen()
 const otherKp = mlDsa.ml_dsa65.keygen()
 
-test('attest: returns valid envelope shape', () => {
-  const env = attest('hello', keypair)
+test('attest: returns valid envelope shape', async () => {
+  const env = await attest('hello', keypair)
   assert.equal(env['kxco-attest'], '1')
   assert.ok(typeof env.payload === 'string')
   assert.ok(typeof env.kid === 'string' && env.kid.length === 16)
@@ -16,8 +16,8 @@ test('attest: returns valid envelope shape', () => {
   assert.ok(typeof env.signature === 'string' && env.signature.length > 0)
 })
 
-test('verify: valid envelope returns valid=true and original payload', () => {
-  const env = attest('round trip', keypair)
+test('verify: valid envelope returns valid=true and original payload', async () => {
+  const env = await attest('round trip', keypair)
   const result = verify(env, keypair.publicKey)
   assert.equal(result.valid, true)
   assert.equal(Buffer.from(result.payload).toString('utf-8'), 'round trip')
@@ -25,50 +25,72 @@ test('verify: valid envelope returns valid=true and original payload', () => {
   assert.equal(result.issuedAt, env.issuedAt)
 })
 
-test('verify: binary payload round-trips correctly', () => {
+test('verify: binary payload round-trips correctly', async () => {
   const bytes = new Uint8Array([0, 1, 2, 3, 255, 254, 253])
-  const env    = attest(bytes, keypair)
+  const env    = await attest(bytes, keypair)
   const result = verify(env, keypair.publicKey)
   assert.equal(result.valid, true)
   assert.deepEqual(result.payload, bytes)
 })
 
-test('verify: wrong public key returns valid=false', () => {
-  const env    = attest('test', keypair)
+test('verify: wrong public key returns valid=false', async () => {
+  const env    = await attest('test', keypair)
   const result = verify(env, otherKp.publicKey)
   assert.equal(result.valid, false)
   assert.equal(result.error, 'signature invalid')
 })
 
-test('verify: tampered payload returns valid=false', () => {
-  const env     = attest('original', keypair)
+test('verify: tampered payload returns valid=false', async () => {
+  const env     = await attest('original', keypair)
   const tampered = { ...env, payload: env.payload.slice(0, -4) + 'AAAA' }
   const result  = verify(tampered, keypair.publicKey)
   assert.equal(result.valid, false)
 })
 
-test('verify: tampered signature returns valid=false', () => {
-  const env     = attest('original', keypair)
+test('verify: tampered signature returns valid=false', async () => {
+  const env     = await attest('original', keypair)
   const tampered = { ...env, signature: env.signature.slice(0, -4) + 'AAAA' }
   const result  = verify(tampered, keypair.publicKey)
   assert.equal(result.valid, false)
 })
 
-test('verify: tampered issuedAt returns valid=false', () => {
-  const env     = attest('original', keypair)
+test('verify: tampered issuedAt returns valid=false', async () => {
+  const env     = await attest('original', keypair)
   const tampered = { ...env, issuedAt: '2000-01-01T00:00:00.000Z' }
   const result  = verify(tampered, keypair.publicKey)
   assert.equal(result.valid, false)
 })
 
-test('verify: missing signature field returns valid=false', () => {
-  const { signature: _, ...noSig } = attest('x', keypair)
+test('verify: missing signature field returns valid=false', async () => {
+  const { signature: _, ...noSig } = await attest('x', keypair)
   assert.equal(verify(noSig, keypair.publicKey).valid, false)
 })
 
-test('verify: unsupported version returns valid=false', () => {
-  const env    = { ...attest('x', keypair), 'kxco-attest': '99' }
+test('verify: unsupported version returns valid=false', async () => {
+  const env    = { ...await attest('x', keypair), 'kxco-attest': '99' }
   const result = verify(env, keypair.publicKey)
   assert.equal(result.valid, false)
   assert.equal(result.error, 'unsupported version')
+})
+
+test('attest: anchor=true calls chain.anchorAttestation and adds chainAnchor', async () => {
+  let captured = null
+  const mockChain = {
+    anchorAttestation: async (opts) => {
+      captured = opts
+      return { txHash: '0xabc', blockNumber: 1 }
+    }
+  }
+  const env = await attest('anchored payload', keypair, { anchor: true, purpose: 'test-anchor', chain: mockChain })
+  assert.ok(captured !== null, 'anchorAttestation should be called')
+  assert.ok(typeof captured.payloadHash === 'string' && captured.payloadHash.length === 64)
+  assert.equal(captured.purpose, 'test-anchor')
+  assert.deepEqual(env.chainAnchor, { txHash: '0xabc', blockNumber: 1 })
+})
+
+test('attest: anchor=false does not call chain', async () => {
+  let called = false
+  const mockChain = { anchorAttestation: async () => { called = true } }
+  await attest('not anchored', keypair, { anchor: false, chain: mockChain })
+  assert.equal(called, false)
 })
